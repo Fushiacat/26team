@@ -33,7 +33,6 @@ async def cmd_find(message: Message):
         await message.answer(
             f"Имя: {candidate['name']}\n"
             f"Направление: {candidate['direction']}\n"
-            f"Роль: {role_text}\n"
-            f"Описание: {candidate['description']}",
+            f"Роль: {role_text}",
             reply_markup=keyboard,
         )

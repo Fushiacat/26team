@@ -14,19 +14,18 @@ async def init_db():
                 name TEXT NOT NULL,
                 direction TEXT NOT NULL CHECK(direction IN ('09.03.01', '09.03.03', '09.03.04', '27.03.04')),
                 role TEXT NOT NULL CHECK(role IN ('seeker', 'organizer')),
-                description TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         await db.commit()
 
 
-async def create_user(telegram_id: int, name: str, direction: str, role: str, description: str) -> dict:
+async def create_user(telegram_id: int, name: str, direction: str, role: str) -> dict:
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("""
-            INSERT OR REPLACE INTO users (telegram_id, name, direction, role, description)
-            VALUES (?, ?, ?, ?, ?)
-        """, (telegram_id, name, direction, role, description))
+            INSERT OR REPLACE INTO users (telegram_id, name, direction, role)
+            VALUES (?, ?, ?, ?)
+        """, (telegram_id, name, direction, role))
         await db.commit()
         return await get_user(telegram_id)
 

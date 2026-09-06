@@ -13,7 +13,6 @@ class EditForm(StatesGroup):
     editing_name = State()
     editing_direction = State()
     editing_role = State()
-    editing_description = State()
 
 
 @router.message(F.text == "/me")
@@ -27,8 +26,7 @@ async def cmd_me(message: Message):
         f"Твоя анкета:\n\n"
         f"Имя: {user['name']}\n"
         f"Направление: {user['direction']}\n"
-        f"Роль: {role_text}\n"
-        f"Описание: {user['description']}\n\n"
+        f"Роль: {role_text}\n\n"
         f"Нажми /edit чтобы изменить.",
         reply_markup=edit_keyboard()
     )
@@ -42,7 +40,6 @@ async def edit_start(callback: CallbackQuery, state: FSMContext):
             [InlineKeyboardButton(text="Имя", callback_data="edit:name")],
             [InlineKeyboardButton(text="Направление", callback_data="edit:direction")],
             [InlineKeyboardButton(text="Роль", callback_data="edit:role")],
-            [InlineKeyboardButton(text="Описание", callback_data="edit:description")],
         ])
     )
     await state.set_state(EditForm.choosing_field)
@@ -61,9 +58,6 @@ async def edit_field(callback: CallbackQuery, state: FSMContext):
     elif field == "role":
         await callback.message.edit_text("Выбери новую роль:", reply_markup=role_keyboard())
         await state.set_state(EditForm.editing_role)
-    elif field == "description":
-        await callback.message.edit_text("Введи новое описание (до 500 символов):")
-        await state.set_state(EditForm.editing_description)
     await callback.answer()
 
 
@@ -94,14 +88,3 @@ async def process_edit_role(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text("Роль обновлена!")
     await callback.answer()
-
-
-@router.message(EditForm.editing_description)
-async def process_edit_description(message: Message, state: FSMContext):
-    description = message.text.strip()
-    if len(description) > 500:
-        await message.answer("Описание слишком длинное (макс. 500 символов).")
-        return
-    await update_user(message.from_user.id, description=description)
-    await state.clear()
-    await message.answer("Описание обновлено!")

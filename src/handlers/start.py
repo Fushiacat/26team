@@ -12,7 +12,6 @@ class RegistrationForm(StatesGroup):
     waiting_name = State()
     waiting_direction = State()
     waiting_role = State()
-    waiting_description = State()
 
 
 @router.message(F.text == "/start")
@@ -25,8 +24,7 @@ async def cmd_start(message: Message, state: FSMContext):
             f"Твоя анкета:\n"
             f"Имя: {user['name']}\n"
             f"Направление: {user['direction']}\n"
-            f"Роль: {role_text}\n"
-            f"Описание: {user['description']}\n\n"
+            f"Роль: {role_text}\n\n"
             f"Используй /me для просмотра, /edit для редактирования, /find для поиска."
         )
         return
@@ -68,40 +66,23 @@ async def process_direction(callback: CallbackQuery, state: FSMContext):
 async def process_role(callback: CallbackQuery, state: FSMContext):
     role = callback.data.split(":")[1]
     await state.update_data(role=role)
-    role_text = "Ищу команду" if role == "seeker" else "Собираю команду"
-    await callback.message.edit_text(
-        f"Роль: {role_text}\n"
-        "Опиши себя кратко: навыки, опыт, что ищешь на хакатоне.\n"
-        "Максимум 500 символов."
-    )
-    await state.set_state(RegistrationForm.waiting_description)
-    await callback.answer()
-
-
-@router.message(RegistrationForm.waiting_description)
-async def process_description(message: Message, state: FSMContext):
-    description = message.text.strip()
-    if len(description) > 500:
-        await message.answer("Описание слишком длинное (макс. 500 символов). Сократи.")
-        return
     data = await state.get_data()
     await create_user(
-        telegram_id=message.from_user.id,
+        telegram_id=callback.from_user.id,
         name=data["name"],
         direction=data["direction"],
-        role=data["role"],
-        description=description,
+        role=role,
     )
     await state.clear()
-    role_text = "Ищу команду" if data["role"] == "seeker" else "Собираю команду"
-    await message.answer(
+    role_text = "Ищу команду" if role == "seeker" else "Собираю команду"
+    await callback.message.edit_text(
         "Анкета сохранена!\n\n"
         f"Имя: {data['name']}\n"
         f"Направление: {data['direction']}\n"
-        f"Роль: {role_text}\n"
-        f"Описание: {description}\n\n"
+        f"Роль: {role_text}\n\n"
         "Команды:\n"
         "/me — посмотреть анкету\n"
         "/edit — редактировать анкету\n"
         "/find — найти подходящих"
     )
+    await callback.answer()
