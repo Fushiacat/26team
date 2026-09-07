@@ -18,5 +18,7 @@ async def setup_test_db():
     await init_db()
     yield
     async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM team_members")
+        await db.execute("DELETE FROM teams")
         await db.execute("DELETE FROM users")
         await db.commit()
